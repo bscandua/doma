@@ -1,0 +1,37 @@
+name: Find Dynamic URL
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"  # 5 dakikada bir çalışır
+  workflow_dispatch:       # Manuel çalıştırma
+
+permissions:
+  contents: write  # <== GitHub Actions'ın push yetkisi
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Repo'yu klonla
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}  # <== Push için gerekli
+
+      - name: PHP kur
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Scripti çalıştır
+        run: php find_url.php
+
+      - name: Dosya değiştiyse commit et
+        run: |
+          if [[ `git status --porcelain` ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add valid_url.txt
+            git commit -m "URL güncellendi: $(date '+%Y-%m-%d %H:%M:%S')"
+            git push
+          fi
